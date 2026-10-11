@@ -23,8 +23,25 @@ function render(){banner();
  else if(stage==='play'){
  const step=p.draft.step;
  if(step===3){
- app.innerHTML=`${progressMarkup(1)}<span class="eyebrow">CHOOSE YOUR COLLEAGUES</span><h2>Three seats.<br>Six people.</h2><p>Choose three colleagues for your launch team. Each brings something useful—and a trade-off.</p><div id="crew-count" class="small" role="status">${p.draft.crew.length} of 3 selected</div><div class="crew-grid">${CREW.map(c=>`<button class="crew-card" data-crew="${c.id}" aria-pressed="${p.draft.crew.includes(c.id)}"><span class="avatar">${c.name[0]}</span><strong>${c.name} · ${c.role}</strong><p>${c.strength}</p><p class="tradeoff">${c.tradeoff}</p></button>`).join('')}</div><div id="error" class="error" role="alert"></div><button id="next" class="button full" ${p.draft.crew.length!==3?'disabled':''}>Find my role →</button><button id="back" class="button text">← Back</button>`;
- app.querySelectorAll('[data-crew]').forEach(b=>b.addEventListener('click',()=>{const key=b.dataset.crew;if(p.draft.crew.includes(key))p.draft.crew=p.draft.crew.filter(x=>x!==key);else if(p.draft.crew.length<3)p.draft.crew.push(key);app.querySelectorAll('[data-crew]').forEach(x=>x.setAttribute('aria-pressed',p.draft.crew.includes(x.dataset.crew)));id('crew-count').textContent=p.draft.crew.length+' of 3 selected';id('next').disabled=p.draft.crew.length!==3;}));
+ app.innerHTML=`${progressMarkup(1)}<span class="eyebrow">BUILD YOUR LAUNCH CREW</span><h2>Three seats.<br>Who’s coming?</h2><p>Tap a card to invite a colleague. Or drag a card onto a seat to invite or swap them.</p><section class="crew-builder" aria-label="Your launch crew"><div class="crew-table">LAUNCH TEAM<br><strong>One mission. Your chosen crew.</strong></div><div id="crew-seats" class="crew-seats"></div><p id="crew-count" role="status" aria-live="polite"></p></section><div class="crew-grid">${CREW.map(c=>`<button type="button" class="crew-card" draggable="true" data-crew="${c.id}" aria-pressed="false"><span class="avatar">${c.name[0]}</span><strong>${c.name} · ${c.role}</strong><p>${c.strength}</p><p class="tradeoff">${c.tradeoff}</p><span class="crew-invite">Invite +</span></button>`).join('')}</div><div id="error" class="error" role="alert"></div><button id="next" class="button full" disabled>Meet my crew →</button><button id="back" class="button text">← Back</button>`;
+ const updateCrew=()=>{
+  id('crew-seats').innerHTML=Array.from({length:3},(_,i)=>{const c=CREW.find(c=>c.id===p.draft.crew[i]);return `<button type="button" class="crew-seat ${c?'occupied':''}" data-seat="${i}" aria-label="${c?'Remove '+c.name:'Empty seat '+(i+1)}"><span class="seat-avatar">${c?c.name[0]:'+'}</span><strong>${c?c.name:'Seat '+(i+1)}</strong><span>${c?c.role:'Invite someone'}</span>${c?'<small>Remove ×</small>':''}</button>`;}).join('');
+  id('crew-count').textContent=p.draft.crew.length===3?'Your crew is ready! Swap anyone before continuing.':`${p.draft.crew.length} of 3 seats filled. Choose your next colleague.`;
+  id('next').disabled=p.draft.crew.length!==3;
+  app.querySelectorAll('[data-crew]').forEach(x=>{const yes=p.draft.crew.includes(x.dataset.crew);x.setAttribute('aria-pressed',yes);x.querySelector('.crew-invite').textContent=yes?'On your crew ✓':'Invite +';});
+  app.querySelectorAll('[data-seat]').forEach(x=>{
+   x.addEventListener('click',()=>{const i=Number(x.dataset.seat);if(p.draft.crew[i]){p.draft.crew.splice(i,1);updateCrew();}else id('crew-count').textContent='Tap a colleague below to fill a seat.';});
+   x.addEventListener('dragover',e=>{e.preventDefault();x.classList.add('drop-target');});
+   x.addEventListener('dragleave',()=>x.classList.remove('drop-target'));
+   x.addEventListener('drop',e=>{e.preventDefault();x.classList.remove('drop-target');const key=e.dataTransfer.getData('text/plain');if(!CREW.some(c=>c.id===key)||p.draft.crew.includes(key))return;const i=Number(x.dataset.seat);if(i<p.draft.crew.length)p.draft.crew[i]=key;else if(p.draft.crew.length<3)p.draft.crew.push(key);updateCrew();});
+  });
+ };
+ app.querySelectorAll('[data-crew]').forEach(x=>{
+  x.addEventListener('click',()=>{const key=x.dataset.crew;if(p.draft.crew.includes(key))p.draft.crew=p.draft.crew.filter(k=>k!==key);else if(p.draft.crew.length<3)p.draft.crew.push(key);else{id('crew-count').textContent='All seats are filled. Remove a seated colleague first, then invite someone new.';return;}updateCrew();});
+  x.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',x.dataset.crew);e.dataTransfer.effectAllowed='copy';});
+  x.addEventListener('dragend',()=>app.querySelectorAll('.drop-target').forEach(y=>y.classList.remove('drop-target')));
+ });
+ updateCrew();
  bind('next',()=>advance());bindBack();
  }else if(step===13){
  selected=p.draft.reflection===null?null:String(p.draft.reflection);
