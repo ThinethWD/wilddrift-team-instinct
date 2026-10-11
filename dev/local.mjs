@@ -1,0 +1,4 @@
+import {createServer} from 'node:http';import {readFile} from 'node:fs/promises';import {resolve,extname} from 'node:path';import handler from '../api/handler.js';
+const root=resolve('public'),types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png'};
+const server=createServer(async(req,res)=>{const url=new URL(req.url,'http://localhost');if(url.pathname.startsWith('/api/')){req.query={op:url.pathname.slice(5)};return handler(req,res);}let path=url.pathname==='/'?'/index.html':url.pathname==='/admin'?'/admin.html':url.pathname;const file=resolve(root,'.'+path);if(!file.startsWith(root+'/')){res.writeHead(403);return res.end();}try{const content=await readFile(file);res.setHeader('Content-Type',types[extname(file)]||'application/octet-stream');res.end(content);}catch{res.writeHead(404);res.end('Not found');}});
+server.listen(Number(process.env.PORT||3000),'127.0.0.1',()=>console.log('Local development server ready.'));
