@@ -1,58 +1,60 @@
-# WildDrift Team Instinct — four-move update (2.0)
+# WildDrift Team Instinct — animated separate games (3.0)
 
-## Deploy this update to your existing GitHub + Vercel site
+## Deploy in this order
 
-Extract the ZIP. At the ROOT of your existing GitHub repository, select **Add file → Upload files** and drag in the extracted **public**, **lib** and **test** folders, plus **README.md**. Keep their folder names and filenames exactly as supplied. Commit all files together so the frontend and server update in the same deployment.
+### 1. Apply the team limit to your existing Supabase project
 
-If you prefer uploading into each existing folder, upload the files INSIDE that folder. Do not create `public/public`, `lib/lib`, or `test/test`, and do not leave download suffixes such as `(1)` on filenames.
+Open `supabase/team-limit-10.sql` from this ZIP in a text editor. Copy its entire contents into **Supabase → SQL Editor → New query** and click **Run**.
 
-Wait for the latest Vercel Production deployment to show **Ready**. Refresh the participant site and open **Try a sample experience**. The welcome screen should say **About 2–3 minutes** and **Four moves**.
+This adds and backfills a member counter and installs a membership trigger. It preserves existing participants, teams, reports and admin accounts. It is safe to rerun. Do NOT rerun the original `setup.sql`, clear the database, or create a new project.
 
-**No Supabase SQL, table deletion or environment-variable changes are needed.** Keep your existing Supabase and OpenAI connections. Existing completed records are preserved. Unfinished earlier 12-question sessions start the new four-move journey from the beginning; the same participant record is retained. Completed earlier reports remain readable and are labelled as earlier 12-decision snapshots. To repeat a completed live assessment, use a new test WhatsApp number or manage the test record separately; a sample experience can always be restarted without touching the database.
+The maximum is **10 registered members, including the creator**. Participants still playing count toward the limit. The limit applies both to people joining at registration and to those joining after receiving their report. Atomic database increments prevent competing joins from claiming the same final place. Removing a participant from a team frees a place.
 
-## Files replaced
+Existing teams already above 10 are preserved and cannot accept new members while at or above 10. No people are automatically removed.
 
-- `public/app.js`: four participant moves; brief action cards; crew selection; reactions; existing registration and team flows.
-- `public/model.js`: version 2.0, four questions, short colleague cards, four-point scoring, detailed evidence-grounded fallback reports, legacy result compatibility.
-- `public/ui.js`: richer report display, copy text and browser-print PDFs; legacy report rendering.
-- `public/admin.js`: new sample reports, version-aware team report updates, compatible individual report display.
-- `public/styles.css`: compact mission scenes and readable report panels; all opening-panel text is white on navy.
-- `public/index.html`: updated welcome metadata and cache-versioned assets; admin link remains hidden.
-- `public/admin.html`: cache-versioned admin assets.
-- `lib/backend.js`: detailed AI report instructions and response schema, anonymous four-decision/crew evidence, explicit new draft defaults and equal-member team aggregation across older/newer versions.
-- `test/model.test.mjs`, `test/api.test.mjs`, `test/journey.test.mjs`: updated verification for the new model and journey.
-- `README.md`: these deployment instructions.
+### 2. Upload the site update to GitHub
 
-Do not replace `supabase/setup.sql`, `vercel.json`, `package.json`, API handler, or your environment variables. They are intentionally absent from this update ZIP.
+At the **root/main folder** of your existing repository, select **Add file → Upload files**. Drag in the extracted **public**, **lib**, **test** and **supabase** folders, plus **README.md**. Commit them together.
 
-## The participant experience
+The ZIP is a patch: upload its contents without deleting the other repository files. Keep the folder structure. Do not create `public/public` or leave suffixes such as `(1)` on filenames. The `public/vendor` folder must be included: it contains the self-hosted GSAP animation library.
 
-1. **You’re on:** tap one of four project-desk actions.
-2. **Three seats:** invite three fictional colleagues, then choose where YOU fit.
-3. **Plot twist:** respond to a cancelled attraction and see a teammate's concern.
-4. **You pulled it off:** tap one reply in a simulated group chat and reveal the snapshot.
+Uploading the SQL file to GitHub does not execute it; step 1 in Supabase is required.
 
-There is no final reflection question, live countdown, performance score or leaderboard. Crew selections provide context for feedback; they do not add personality points. A participant may change selections before continuing or revisit an earlier move.
+### 3. Verify the deployment
 
-## Detailed reports
+Wait for the latest Vercel Production deployment to show **Ready**. Open the site in a private window and register a test participant. You should see **Four games**, the Mystery Box, Build Your Crew, Broken Bridge and Victory Wall. There is no sample button or participant demo mode. Existing completed participants resume their stored reports; use a new test WhatsApp number if you need a new full run.
 
-The report includes a short opening summary, teamwork pattern, two contributions, a possible pressure trade-off, selected crew interpretation, advice for working together, a next-week experiment and a reflection question. AI is asked to write approximately 350–450 words; length can vary. Reports are reflections based on limited evidence, not validated personality diagnoses. OpenAI receives the selected decisions and fictional crew cards, not participant names, company names or phone numbers.
+No new API keys, environment variables, npm dependencies or Vercel settings are needed. Keep `DEMO_MODE=false`; if your existing environment has it set to true, change it to false and redeploy. The app deliberately blocks live registration when server storage is disabled, rather than silently creating a sample.
 
-If AI is unavailable, a personalised scoring-guide report of the same structure is generated. It uses actual selected choices and colleagues, not a generic dominant-type template. The report source is shown in the participant and admin views.
+## What changed
 
-Individual PDF buttons use the browser's print dialog, as before. Review print preview before saving. The blue opening panel explicitly uses white text and print-color-adjust; browser print settings can still affect background printing.
+- Four separate mini-games replace the shared launch story.
+- Vector illustrations and GSAP sequences replace emoji-only scenes.
+- Mystery Box: the lid opens and the selected tool appears.
+- Build Your Crew: illustrated characters arrive in the selected seats; tap and desktop drag-and-drop both work.
+- Broken Bridge: detour, new crossing, coordination or inspection appears according to the labelled choice.
+- Victory Wall: the chosen badge lands, followed by a brief confetti burst.
+- Reduced-motion users see the same selected states without decorative animation.
+- Participant sample access, `?demo=1` bypass, and public fictional admin workspace are removed. Normal participant registration and authenticated admin sign-in remain.
+- Team lookup shows member counts and full status; database errors are translated into a clear full-team message.
+- Reports now interpret the actual choices from four independent games. The deeper structure and white-on-navy report header remain.
+- Completed older reports are preserved. Older unfinished journeys restart with the new games in the same participant record.
+- The large introductory panel is hidden while playing or reading reports on phones, keeping the activity closer to the top of the page.
 
-Team report generation remains manual. Existing team reports are marked for update when the report version or completed member list changes. Mixed old/new results are aggregated as equal-member proportions, so 12-question respondents do not outweigh four-question respondents.
+The three fictional crew seats are part of the mini-game; the ten-person limit applies to the real registered team, not those fictional seats.
 
-## Verification before inviting participants
+## Updated files
 
-- Start a fresh sample: complete four moves, select/swap colleagues, go back to revise, reveal the report, copy it and open PDF preview.
-- Confirm the crew step cannot proceed until three colleagues and your own role are selected.
-- Test on an actual phone: text, touch targets, crew seats and report header.
-- Register a new live test participant, refresh midway, finish and confirm the report appears in the admin workspace.
-- Create/join a team; generate a combined report for two completed members.
-- Review any earlier completed report and confirm it still opens.
+`public/app.js`, `public/model.js`, `public/ui.js`, `public/admin.js`, `public/styles.css`, `public/index.html`, `public/admin.html`, new `public/animations.js`, new `public/vendor/gsap.min.js`, `lib/backend.js`, three `test/*.test.mjs` files, new `supabase/team-limit-10.sql`, and this README.
 
-Automated checks cover all 256 four-answer combinations, validation, report evidence, legacy records, equal-member team aggregation, authentication, generation locking and the AI schema/privacy contract. External Supabase/OpenAI calls are mocked; real account connections and mobile/browser printing must be checked after deployment.
+The patch does not replace the original database setup, package configuration, API handler or Vercel configuration. GSAP 3.13.0 is self-hosted and retains its upstream copyright and standard-license notice in the supplied vendor file. No animation-library account is required.
 
-Local checks: `npm test`, `npm run build`. The build retains the existing zero-production-dependency approach and the existing deployment configuration.
+## Checks
+
+`npm test` verifies model, API, journey, old-result compatibility, report evidence and full-team messages; `npm run build` uses the existing build configuration.
+
+The SQL migration was executed against a local PostgreSQL-compatible engine: counter backfill, tenth/eleventh registration, competing last-slot requests, later joining, deletion freeing a slot, idempotent joining, transfers, creator inclusion, cross-event checks and rerunning the migration were tested.
+
+Browser checks use fictional local registrations and mocked API endpoints. They verify GSAP loading under the production content-security policy, the four animated games, report rendering, sample removal, full-team controls, white report header, reduced motion and narrow layouts. These checks do not replace a live Supabase/OpenAI test.
+
+After deployment, check one live individual journey and two live team members, then verify the team count in the admin workspace. Review PDF preview before saving as PDF, as before.

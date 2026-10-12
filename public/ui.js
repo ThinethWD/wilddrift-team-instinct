@@ -1,4 +1,4 @@
-import {DISCLAIMER,LEGACY_DISCLAIMER,reportText,TYPES} from './model.js?v=2.0';
+import {DISCLAIMER,LEGACY_DISCLAIMER,reportText,TYPES} from './model.js?v=3.0';
 export const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function api(op,body){const r=await fetch('/api/'+op,{method:body===undefined?'GET':'POST',credentials:'same-origin',headers:body===undefined?{}:{'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});let data;try{data=await r.json()}catch{throw new Error('The connection was interrupted. Please try again.')}if(!r.ok){const e=new Error(data.error||'Unable to complete this request.');e.status=r.status;throw e;}return data;}
 export const id=s=>document.getElementById(s);
